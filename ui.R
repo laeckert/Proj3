@@ -1,7 +1,12 @@
 
-library(shiny)
+library(DT)
+library(ggplot2)
+library(dplyr)
+library(plotly)
 library(shinythemes)
-library(shinydashboard)
+library(shiny)
+library(tidyverse)
+library(maps)
 
 
 
@@ -32,6 +37,7 @@ br(),
         ),
         dashboardBody(
             tabItems(
+                
                 tabItem(tabName = "info",
                         em(h3("Describing the App and Data", style="color:navy")),
                         box(background = "purple", width=50,
@@ -43,18 +49,26 @@ br(),
                             h5("Supporting Info"), uiOutput("tab"), uiOutput("datatab")),
                         box(background = "teal", width=50,
                             h5("Here is how you navigate this app..."))),
-                tabItem(tabName = "explore"),
+                
+                tabItem(tabName = "explore", width=50,
+                        
+                        fluidRow(box(plotOutput("boxplot"))),
+                        box(selectInput("choice", "Select Region to Summarize ", choices = levels(as.factor(happydata$Region)))),
+                        box(h5(textOutput("info")))),
+                
                 tabItem(tabName = "cluster"),
+                
                 tabItem(tabName = "modeling"),
+                
                 tabItem(tabName = "access", strong(em("Select and Download Data by Region")),
                     selectizeInput("region", "Region", choices = levels(as.factor(happydata$Region))),
-                    downloadButton("Download Data", "Download", "Data"),
+                    downloadButton("downloadData", "Download"),
                     hr(),
-                    DT::dataTableOutput("happytable"))
+                    dataTableOutput("happytable"))
                 )
             )
         )
-        
+           
     )
     
 

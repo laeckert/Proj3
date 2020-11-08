@@ -25,7 +25,7 @@ dfavg <- happydata %>%
 dfavg
 
 #boxplot
-ggplot(data = happydata, aes(x = happydata$Region, y = happydata$`Score`)) +
+hover <- ggplot(data = happydata, aes(x = happydata$Region, y = happydata$`Score`)) +
   geom_boxplot(aes(color = Region, fill = Region), alpha = 0.5) +
   geom_point(aes(color = Region), position = position_jitter(width = .1)) +
   labs(title = "Happiness by World Region", 
@@ -34,7 +34,8 @@ ggplot(data = happydata, aes(x = happydata$Region, y = happydata$`Score`)) +
   theme_minimal() +
   theme(plot.title = element_text(size = rel(2.5)),
         axis.title = element_text(size = rel(1.5)),
-        axis.text.x = element_blank())
+        axis.text.x = element_blank()) 
+fig <- ggplotly(hover)
 
 #Correlation
 names(happydata)[names(happydata)=="Economy"] <- "Economy"

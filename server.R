@@ -29,9 +29,39 @@ shinyServer(function(input, output, session) {
     tagList("Here you can see visit my github page to see code:", url)
   })
   
+  #downloadable csv of dataset
+  output$downloadData <- downloadHandler(
+    filename = function() {
+      paste(region, ".csv", sep = "")
+    },
+    content = function(file) {
+      write.csv(region, file, row.names = FALSE)
+    }
+  )
   
+  #plot for exploretab
+  output$boxplot <- renderPlot({
+    ggplot(data = happydata, aes(x = happydata$Region, y = happydata$`Score`)) +
+      geom_boxplot(aes(color = Region, fill = Region), alpha = 0.5) +
+      geom_point(aes(color = Region), position = position_jitter(width = .1)) +
+      labs(title = "Happiness by World Region", 
+           x = "Region", 
+           y = "Happiness Score") +
+      theme_minimal() +
+      theme(plot.title = element_text(size = rel(2.5)),
+            axis.title = element_text(size = rel(1.5)),
+            axis.text.x = element_blank())
+  })
   
-  output$happytable = DT::renderDataTable({
+  #create text info
+  output$info <- renderText({
+    #get filtered data
+    
+    paste("The average happiness score for", input$choice, "is", round(mean(happydata$Score, na.rm = TRUE), 2))
+  })
+  
+  #table for access tab
+  output$happytable <- DT::renderDataTable({
     happydata
   })
 
