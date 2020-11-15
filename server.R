@@ -10,18 +10,18 @@ library(caret)
 library(ggfortify)
 
 #Load in our data and filter by year
-data <- as_tibble(read_csv("2016.csv"))
-pdata <- as_tibble(read_csv("2016.csv"))
+
+happydata <- as_tibble(read_csv("2016.csv"))
 
 #Set up URLs 
-url <- a("My github page", href="https://github.com/laeckert/Proj3")
-urldata <- a("Dataset", href="https://www.kaggle.com/unsdsn/world-happiness")
+url <- a("Githib repo", href="https://github.com/laeckert/Proj3")
+urldata <- a("World Happiness Report", href="https://www.kaggle.com/unsdsn/world-happiness")
 
 shinyServer(function(input, output, session){
   
   #Link URLs to the dataset and personal github page. 
   output$datatab <- renderUI({
-    tagList("Here you can find the dataset:", urldata)
+    tagList("Background info on dataset:", urldata)
   })
   
   output$tab <- renderUI({
@@ -31,16 +31,16 @@ shinyServer(function(input, output, session){
   
   #Get our Filtered Data dynamically. 
   getData <- reactive({
-    newData <- pdata %>% filter(pdata$Region == input$causes)
+    newData <- happydata %>% filter(happydata$Region == input$regs)
   })
   getData1 <- reactive({
-    newData <- pdata %>% filter(pdata$Region == input$cause)
+    newData <- happydata %>% filter(happydata$Region == input$region)
   })
   getData2 <- reactive({
-    newData <- pdata %>% filter(pdata$Region == input$cauze)
+    newData <- happydata %>% filter(happydata$Region == input$biReg)
   })
   
-  #Dynamic UI that enables user to reset to default settings
+  #UI to reset to default settings
   observe({
     if(input$check){
       updateSliderInput(session, "size", min=1, max=10, value=1)
@@ -56,8 +56,8 @@ shinyServer(function(input, output, session){
     #get filtered data
     newData <- getData()
     #create plot
-    g <- ggplot(newData, aes(x=Health, y=Score)) 
-    g + geom_point(size=input$size, aes(col=input$causes))
+    g <- ggplot(happydata, aes_string(x=input$x, y=input$y)) 
+    g + geom_point(size=input$size, aes(col=input$regs)) + theme(legend.position = "none")  
   })
   
   #Make a reactive plot. 
@@ -66,47 +66,60 @@ shinyServer(function(input, output, session){
     newData <- getData()
     
     #create plot
-    g <- ggplot(newData, aes(x=Health, y=Score)) 
-    g + geom_point(size=input$size, aes(col=input$causes))
+    g <- ggplot(newData, aes_string(x=input$x, y=input$y)) 
+    g + geom_point(size=input$size, aes(col=input$regs))
   })
   
-  #Make the plot downloadable to a png file. 
+  #download plot to png 
   output$DownloadPlot <- downloadHandler(
-    filename = function() { paste(input$causes, '.png', sep='') },
+    filename = function() { paste(input$regs, '.png', sep='') },
     content = function(file) {
       png(file)
       print(plotInput())
       dev.off()
     })
   
-  #creating the dynamic titles for our exploration page
+  #dynamic title
   output$title <- renderUI({
-    text <- HTML("Exploring Data <br> <br> Scatterplot of Cause:",
-                 input$causes)
+    text <- HTML("Exploring Data <br> <br> Scatterplot of Regions:",
+                 input$regs)
   })
   
-  #create ability for user to click on plot
+  #to click on plot
   output$info <- renderText({
     paste0("x=", input$plot_click$x, "\ny=", input$plot_click$y)
   })
   
   output$biplottext <- renderUI({
-    if(input$PCs=="Rank"){
-      paste0("Here we look at the linear combination of the Happiness 
-                   and the Year variables for the cause: ", input$cauze,". This biplot shows 
-                   us how strongly the principal components, Year and Happiness, influence each other, and to what extent,
-                   shown by the arrows and the points. Here we can see that the Year somewhat influences the Happiness
-                   as shown by how long the line or vector is for both components. However, it can be difficult to tell as well, 
-                   since the points are scattered in a odd-looking pattern.")
+    if(input$PCs=="Economy"){
+      paste0("Here we look at the linear combination of the Happiness Rank 
+                   and the Economy variables for ", input$biReg,". ")
     }
+    else if(input$PCs=="Family"){
+      paste0("Here we look at the linear combination of the Happiness Rank 
+                   and the Family variables for ", input$biReg,". ")
+    }
+    
     else if(input$PCs=="Health"){
-      paste0("Here we look at the linear combination of 2 principal components: Happiness and the 
-                   Health. The cause of death that we are looking at is: ", input$cauze,". This biplot 
-                   shows us how strongly the principal components influence each other and to what extent, 
-                   as shown by the arrows and the points. Here we can see that the Health component greatly influences the 
-                   Happiness, as the number of Health, intuitively, tells us how the death rate will be. The line or vector that is pointing out, 
-                   indicates a strong relationship, which can also be shown in the direction of the points. ")
+      paste0("Here we look at the linear combination of the Happiness Rank 
+                   and the Health variables for ", input$biReg,". ")
     }
+    
+    else if(input$PCs=="Freedom"){
+      paste0("Here we look at the linear combination of the Happiness Rank 
+                   and the Freedom variables for ", input$biReg,". ")
+    }
+    
+    else if(input$PCs=="Corruption"){
+      paste0("Here we look at the linear combination of the Happiness Rank 
+                   and the Corruption variables for ", input$biReg,". ")
+    }
+    
+    else if(input$PCs=="Generosity"){
+      paste0("Here we look at the linear combination of the Happiness Rank 
+                   and the Generosity variables for ", input$biReg,". ")
+    }
+    
   })
   
   #Create text for model output
@@ -131,9 +144,9 @@ shinyServer(function(input, output, session){
   output$text <- renderText({
     #get filtered data
     newData <- getData()
-    paste("The average Health for cause", input$causes, 
+    paste("The average Health score for", input$regs, 
           "is", round(mean(newData$Health, na.rm = TRUE), 2), 
-          "and the average age-adjusted death rate is", 
+          "and the average happiness score is", 
           round(mean(newData$Score, na.rm = TRUE), 2), sep = " ")
   })
   
@@ -148,10 +161,10 @@ shinyServer(function(input, output, session){
     print(newdata)
   })
   
-  #Make a button that downloads a csv file of the data
+  #button to download a csv file of the data
   output$DownloadData <- downloadHandler(
     filename = function(){
-      paste(input$cause, ".csv", sep="")
+      paste(input$region, ".csv", sep="")
     },
     content = function(file){
       write.csv(getData(), file, row.names = FALSE)
@@ -160,14 +173,14 @@ shinyServer(function(input, output, session){
   
   #Begin making dynamic user interface for choosing models 
   ModelData <- reactive({
-    pdata[, c(input$slrmodel, "Happiness")]
+    happydata[, c(input$slrmodel, "Score")]
   })
   
   #1st supervised learning model
   #Create simple models to choose from
-  model1 <- lm(Score ~ Health, data=pdata)
-  model2 <- lm(Score ~ Rank, data=pdata)
-  model3 <- lm(Score ~ Country, data=pdata)
+  model1 <- lm(Score ~ Health, data=happydata)
+  model2 <- lm(Score ~ Rank, data=happydata)
+  model3 <- lm(Score ~ Country, data=happydata)
   sum_mod1 <- summary(model1)
   
   output$plot1 <- renderPlot({
@@ -184,20 +197,41 @@ shinyServer(function(input, output, session){
     
     newdata <- getData2()
     dapcs <- prcomp(select(newdata, Score, Health))
-    yapcs <- prcomp(select(newdata, Score, Rank))
+    fapcs <- prcomp(select(newdata, Score, Family))
+    capcs <- prcomp(select(newdata, Score, Corruption))
+    eapcs <- prcomp(select(newdata, Score, Economy))
+    rapcs <- prcomp(select(newdata, Score, Freedom))
+    gapcs <- prcomp(select(newdata, Score, Generosity))
     
     if(input$PCs=="Health"){
-      biplot(dapcs, xlabs=rep(".", nrow(newdata)), cex=1.8, col="Green")
+      biplot(dapcs, xlabs=rep(".", nrow(newdata)), cex=1.3, col="Green")
     }
     
-    else if(input$PCs=="Rank"){
-      biplot(yapcs, xlabs=rep(".", nrow(newdata)), cex=1.8, col="Blue")
+    else if(input$PCs=="Family"){
+      biplot(fapcs, xlabs=rep(".", nrow(newdata)), cex=1.3, col="Blue")
     }
+    
+    else if(input$PCs=="Corruption"){
+      biplot(capcs, xlabs=rep(".", nrow(newdata)), cex=1.3, col="Green")
+    }
+    
+    else if(input$PCs=="Economy"){
+      biplot(eapcs, xlabs=rep(".", nrow(newdata)), cex=1.3, col="Purple")
+    }
+    
+    else if(input$PCs=="Freedom"){
+      biplot(rapcs, xlabs=rep(".", nrow(newdata)), cex=1.3, col="Purple")
+    }
+    
+    else if(input$PCs=="Generosity"){
+      biplot(gapcs, xlabs=rep(".", nrow(newdata)), cex=1.3, col="Purple")
+    }
+    
   })
   
   #Predict our death rate based on # of Health. Used a sliderinput. 
   output$mtable <- renderTable({
-    modeldata <- data.frame(Health = pdata$Health, Score = pdata$Score)
+    modeldata <- data.frame(Health = happydata$Health, Score = happydata$Score)
     model_lm <- lm(Score ~ Health, data=modeldata)
     ddata <- data.frame(Health=input$Health)
     preddata <- predict(model_lm, ddata)
@@ -205,9 +239,9 @@ shinyServer(function(input, output, session){
   })
   
   #Make the models for our MLR models. 
-  model4 <- lm(Score ~ Health + Region, data=pdata)
-  model5 <- lm(Score ~ Health + Rank, data=pdata)
-  model6 <- lm(Score ~ Region + Rank, data=pdata)
+  model4 <- lm(Score ~ Health + Region, data=happydata)
+  model5 <- lm(Score ~ Health + Rank, data=happydata)
+  model6 <- lm(Score ~ Region + Rank, data=happydata)
   
   #Summaries to get our coefficients of R-Squared. 
   sum_mod4 <- summary(model4)
@@ -232,3 +266,4 @@ shinyServer(function(input, output, session){
   })
   
 })
+

@@ -6,43 +6,55 @@ library(dplyr)
 library(tidyverse)
 library(devtools)
 library(DT)
+library(shinyWidgets)
 
 #read in dataset
-data <- as_tibble(read_csv("2016.csv"))
-pdata <- as_tibble(read_csv("2016.csv"))
+
+happydata <- as_tibble(read_csv("2016.csv"))
 
 #Create the basis for our dashboard
-dashboardPage(skin = "green",
+dashboardPage(skin = "purple",
               dashboardHeader(title = "World Happiness", titleWidth = "250"),
               dashboardSidebar(
                   sidebarMenu(
                       menuItem("Information - Start Here!", tabName = "Information", icon = icon("cat")),
                       menuItem("Data Page", tabName = "Data", icon=icon('chart-bar')),
                       menuItem("Data Exploration", tabName = "Exploration", icon=icon("arrow-down")),
-                      menuItem("Unsupervised Learning", tabName = "PCAnalysis", icon=icon('connectdevelop')),
+                      menuItem("PCA", tabName = "PCAnalysis", icon=icon('connectdevelop')),
                       menuItem("Modeling Page", tabName = "Models", icon=icon('feather-alt'))
                   )
               ),
               
               dashboardBody(
                   tabItems(
-                      tabItem(tabName = "Information", em(h2("Describing the App and Data", style="color:navy")),
-                              box(background = "purple", width=12, 
-                                  h4("Final Project for Lucy Eckert in ST558")),
-                              box(background = "teal", width=12, h5("Final Project for Lucy Eckert in ST558")), 
-                              box(background = "yellow", width=12, h5("Links to Documentation!"), uiOutput("tab"), uiOutput("datatab"))), 
+                      tabItem(tabName = "Information", em(h2("Information About this Application and Data", style="color:navy")),
+                              box(background = "olive", width=12, 
+                                  h5("The is the final project for Lucy Eckert in ST558. I built an application to look at how measurements of well-being affect happiness. Do countries with the greatest wealth have the most happiness? Do the healthiest countries have the most happiness? With this app you can review how different factors will predict happiness.")),
+                              box(background = "light-blue", width=12, h5("My data comes from the World Happiness Report, which is a publication of the Sustainable Development Solutions Network. The report was first published in 2012, and I looked at the 2016 dataset.")), 
+                              box(background = "navy", width=12, h5("Documentation"), uiOutput("tab"), uiOutput("datatab"))),
                       
-                      tabItem(tabName = "PCAnalysis", strong(em(h2("Unsupervised Learning"))),
+                      
+                      tabItem(tabName = "Data", strong(em(h2("Data Tables"))),
+                              
+                              fluidRow(box(title="Expand for More Info-->", solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, width = 10, background="navy",
+                                           h5("This page allows you to view and download the data by region")),
+                                       pickerInput("region","Regions", choices=levels(as.factor(happydata$Region)), options = list(`actions-box` = TRUE),multiple = T,selected = "Western Europe"),
+                                      
+                                       downloadButton("DownloadData", "Download", "Data"),
+                                       hr(), 
+                                       dataTableOutput("Tables"))),
+                      
+                      tabItem(tabName = "PCAnalysis", strong(em(h2("Principal Component Analysis"))),
                               fluidRow(
-                                  box(background="green", width=10, collapsible = TRUE, collapsed=TRUE, 
+                                  box(background="maroon", width=10, collapsible = TRUE, collapsed=TRUE, 
                                       title="About PCA", h4("Principal Component Analysis, also known as PCA, is...")),
                                   
-                                  selectizeInput("PCs", "Choose the principal components", choices = names(pdata[c(4,5,6,7,8,9,10)])),
+                                  selectizeInput("PCs", "Choose the principal components", choices = names(happydata[c(5,6,7,8,9,10)])),
                                   
-                                  selectizeInput("cauze", "Look to see biplot based on causes", choices = levels(as.factor(pdata$Region))),
+                                  selectizeInput("biReg", "Look to see biplot that considers the above selected variables", choices = levels(as.factor(happydata$Region))),
                                   uiOutput("biplottext"),
                                   br(), 
-                                  box(title = "BiPlot", width = 6, plotOutput("Biplot")))),
+                                  box(title = "BiPlot", width = 10, plotOutput("Biplot")))),
                       
                       tabItem(tabName = "Models", strong(em(h2("Data Modeling"))), 
                               
@@ -57,7 +69,7 @@ dashboardPage(skin = "green",
                                   helpText(h4('An example of a multiple linear reg. model - 
                                 $$y = b_1x_1 + b_2x_2 + b_3x_1x_2 + e$$'))),
                               
-                              selectizeInput("slrmodel", "Simple Linear Reg. Model - choose the explanatory variable to visualize relation to the death rate", names(pdata)[c(4,7)]),
+                              selectizeInput("slrmodel", "Simple Linear Reg. Model - choose the explanatory variable to visualize relation to the death rate", names(happydata)[c(4,7)]),
                               uiOutput("modeltext"),
                               br(),
                               plotOutput("plot1"),
@@ -73,25 +85,19 @@ dashboardPage(skin = "green",
                               
                               tableOutput("mlrmodel")),
                       
-                      tabItem(tabName = "Data", strong(em(h2("Data Tables"))),
-                              
-                              fluidRow(box(title="Expand for More Info", solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, width = 10, background="green",
-                                           h5("In this app, we explore the factors that were analysed in a study that examined what makes populations happy. This data was ")),
-                                       
-                                       selectizeInput("cause", "Causes", choices = levels(as.factor(pdata$Region))),
-                                       downloadButton("DownloadData", "Download", "Data"),
-                                       hr(), 
-                                       dataTableOutput("Tables"))),
+
                       
                       tabItem(tabName = "Exploration", h2(uiOutput("title")),
-                              column(width=5, 
-                                     box(title="About", solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, width=10, background = "green", 
-                                         h5("In this app, we are looking at filtered data for all 50 States across from 2010 to 2015. By selecting the 
-                       from the causes of death in the dropdown menu, we can view how the number of deaths have impacted the death rate in the five year interval. We can visualize
-                       this in a plot, we can visualize the average of the deaths compared to the death rate, and we can also see a subset of our data of interest in a table."))),
+                              column(width=8, 
+                                     box(title="About", solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE, width=50, background = "navy", 
+                                         h5("Use the dropdowns to select and X and Y variable and explore the correlation between different measurements of well-being. Although you can select from a number of options for the Y axis, the best result will be had from selecting score for the Y axis. Try clicking on the plot to get the x and y at a given location. You can also change the size of the dot with the slider below. Once the plot is to your liking, you can download a png of the plot. I hope you enjoy exploring this data."))),
                               
                               fluidRow(
-                                  selectizeInput("causes", "Causes", choices = levels(as.factor(pdata$Region))),
+                                  selectizeInput("regs", "Regions", choices = levels(as.factor(happydata$Region))),
+                                  selectInput("x", "Please Select a Variable for the X-axis", choices = c("Economy","Family", "Health", "Freedom", 
+                                                                    "Corruption", "Generosity","Score"),selected = "Health"),
+                                  selectInput("y", "Please Select a Variable for the Y-axis", choices = c("Economy","Family", "Health", "Freedom", 
+                                                                    "Corruption", "Generosity","Score"),selected = "Score"),
                                   
                                   plotOutput("dataplot", click = "plot_click", width = "500", height = "350px"),
                                   br(), 
