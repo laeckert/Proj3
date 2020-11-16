@@ -9,17 +9,17 @@ library(ggplot2)
 library(caret)
 library(ggfortify)
 
-#Load in our data and filter by year
+#Load in data 
 
 happydata <- as_tibble(read_csv("2016.csv"))
 
-#Set up URLs 
+#Set up URLs for documentation section 
 url <- a("Githib repo", href="https://github.com/laeckert/Proj3")
 urldata <- a("World Happiness Report", href="https://www.kaggle.com/unsdsn/world-happiness")
 
 shinyServer(function(input, output, session){
   
-  #Link URLs to the dataset and personal github page. 
+  #Link URLs to the dataset and my github page. 
   output$datatab <- renderUI({
     tagList("Background info on dataset:", urldata)
   })
@@ -29,25 +29,25 @@ shinyServer(function(input, output, session){
     
   })
   
-  #Get our Filtered Data dynamically. 
+  #filter data dynamically. 
   getData <- reactive({
-    newData <- happydata %>% filter(happydata$Region == input$regs)
+    newData <- happydata %>% filter(happydata$Region %in% input$regs)
   })
   getData1 <- reactive({
-    newData <- happydata %>% filter(happydata$Region == input$region)
+    newData <- happydata %>% filter(happydata$Region %in% input$region)
   })
   getData2 <- reactive({
-    newData <- happydata %>% filter(happydata$Region == input$biReg)
+    newData <- happydata %>% filter(happydata$Region %in% input$biReg)
   })
   
   #UI to reset to default settings
   observe({
     if(input$check){
-      updateSliderInput(session, "size", min=1, max=10, value=1)
+      updateSliderInput(session, "size", min=1, max=10, value=2)
       updateTextInput(session, "info")
     }
     else
-      updateSliderInput(session, "size", min=1, max=10, value=5)
+      updateSliderInput(session, "size", min=1, max=10, value=2)
   })
   
   #create plot
@@ -81,7 +81,7 @@ shinyServer(function(input, output, session){
   
   #dynamic title
   output$title <- renderUI({
-    text <- HTML("Exploring Data <br> <br> Scatterplot of Regions:",
+    text <- HTML("Exploring Data <br> <br> Scatterplot of Region:",
                  input$regs)
   })
   
@@ -90,6 +90,7 @@ shinyServer(function(input, output, session){
     paste0("x=", input$plot_click$x, "\ny=", input$plot_click$y)
   })
   
+  #prep for the biplots
   output$biplottext <- renderUI({
     if(input$PCs=="Economy"){
       paste0("Here we look at the linear combination of the Happiness Rank 
@@ -122,25 +123,18 @@ shinyServer(function(input, output, session){
     
   })
   
-  #Create text for model output
+  #text for model output
   output$modeltext <- renderUI({
-    if(input$slrmodel=="Rank"){
-      paste0("It looks like that as we have the Year to measure our Happiness, we visualize an interesting 
-                   regression plot. We can view the frequency or # of occurrences with how the levels of Happiness
-                   that we have. For example, for 2015, we have Happiness relatively spread out, with the higher levels
-                   having many occurrences 150 and 250 for the Happiness. As for the previous years, we see that they are 
-                   more concentrated around a smaller interval such as 150 and 200. This may seem to indicate that as year
-                   grows, the death rate may be variable and highly unpredictable given the top 10 causes of death in the U.S.")
+    if(input$slrmodel=="Economy"){
+      paste0("How does a country's economic wellbeing affect happiness value?")
     }
     
     else if(input$slrmodel=="Health"){
-      paste0("It looks like the number of Health appears to be a great predictor of the death rate, as expected. 
-                   Since the Death rate resembles the number of Health from a population given a certain time frame, the 
-                   Health that we have seem to be correlated with our death rate. ")
+      paste0("Does a healthy country mean a happy country?")
     }
   })
   
-  #Get our numeric summaries
+  #get numeric summaries
   output$text <- renderText({
     #get filtered data
     newData <- getData()
@@ -171,7 +165,7 @@ shinyServer(function(input, output, session){
     }
   )
   
-  #Begin making dynamic user interface for choosing models 
+  #dynamic user interface for choosing models 
   ModelData <- reactive({
     happydata[, c(input$slrmodel, "Score")]
   })
@@ -179,8 +173,8 @@ shinyServer(function(input, output, session){
   #1st supervised learning model
   #Create simple models to choose from
   model1 <- lm(Score ~ Health, data=happydata)
-  model2 <- lm(Score ~ Rank, data=happydata)
-  model3 <- lm(Score ~ Country, data=happydata)
+  model2 <- lm(Score ~ Economy, data=happydata)
+  model3 <- lm(Score ~ Freedom, data=happydata)
   sum_mod1 <- summary(model1)
   
   output$plot1 <- renderPlot({
@@ -189,10 +183,11 @@ shinyServer(function(input, output, session){
     if(input$slrmodel=='Health'){
       abline(a=sum_mod1$coefficients[1,1], b=sum_mod1$coefficients[2,1])
     }
-    if(input$slrmodel=='Rank'){abline(model2)}
-    if(input$slrmodel=='Country'){abline(model3)}
+    if(input$slrmodel=='Economy'){abline(model2)}
+    if(input$slrmodel=='Freedom'){abline(model3)}
   })
-  #Create Biplots
+  
+  #Create biplots
   output$Biplot <- renderPlot({
     
     newdata <- getData2()
@@ -229,7 +224,7 @@ shinyServer(function(input, output, session){
     
   })
   
-  #Predict our death rate based on # of Health. Used a sliderinput. 
+  #Predict happiness value based on health score selected from a sliderinput. 
   output$mtable <- renderTable({
     modeldata <- data.frame(Health = happydata$Health, Score = happydata$Score)
     model_lm <- lm(Score ~ Health, data=modeldata)
@@ -238,10 +233,10 @@ shinyServer(function(input, output, session){
     
   })
   
-  #Make the models for our MLR models. 
-  model4 <- lm(Score ~ Health + Region, data=happydata)
-  model5 <- lm(Score ~ Health + Rank, data=happydata)
-  model6 <- lm(Score ~ Region + Rank, data=happydata)
+  #Make the models for MLR models. 
+  model4 <- lm(Score ~ Freedom + Family, data=happydata)
+  model5 <- lm(Score ~ Generosity + Economy, data=happydata)
+  model6 <- lm(Score ~ Health + Family, data=happydata)
   
   #Summaries to get our coefficients of R-Squared. 
   sum_mod4 <- summary(model4)
@@ -250,17 +245,17 @@ shinyServer(function(input, output, session){
   
   #Second supervised learning model - MLR
   output$mlrmodel<- renderTable({
-    if(input$mlrpreds=="Effect of Health and Cause on Happiness"){
-      paste("R-squared: ", sum_mod4$r.squared, "As this is a multiple linear reg. model, we interpret the R-squared value as how the cause and year predictors are related.",
-            "As the R-squared is high, we can conclude that the # of Health and Cause are highly related in measuring the death rate.")
+    if(input$mlrpreds=="Effect of Freedom and Family on Happiness"){
+      paste("R-squared: ", sum_mod4$r.squared, "As this is a multiple linear reg. model, we interpret the R-squared value as how the freedom and family predictors are related.",
+            "As the R-squared is high, we can conclude that freedom and family are highly related in measuring the happiness value.")
     }
-    else if(input$mlrpreds=="Effect of Health and Year on Happiness"){
-      paste("R-squared: ", sum_mod5$r.squared, "As this is a multiple linear reg. model, we interpret the R-squared value as how the cause and year predictors are related.",
-            "As the R-squared is low, we can conclude that the # of Health and Year aren't very related in measuring the death rate.")
+    else if(input$mlrpreds=="Effect of Generosity and Economy on Happiness"){
+      paste("R-squared: ", sum_mod5$r.squared, "As this is a multiple linear reg. model, we interpret the R-squared value as how the generosity and economy predictors are related.",
+            "As the R-squared is low, we can conclude that the generosity and economy aren't very related in measuring the happiness value.")
     }
-    else if(input$mlrpreds=="Effect of Cause and Year on Happiness"){
-      paste("R-squared: ", sum_mod6$r.squared, "As this is a multiple linear reg. model, we interpret the R-squared value as how the cause and year predictors are related.",
-            "As the R-squared is high, we can conclude that the cause and year are highly related in measuring the death rate.")
+    else if(input$mlrpreds=="Effect of Health and Family on Happiness"){
+      paste("R-squared: ", sum_mod6$r.squared, "As this is a multiple linear reg. model, we interpret the R-squared value as how the health and family predictors are related.",
+            "As the R-squared is high, we can conclude that the health and family are highly related in measuring the happiness value.")
       
     }
   })
