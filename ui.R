@@ -31,7 +31,8 @@ dashboardPage(skin = "purple",
                               box(background = "olive", width=12, 
                                   h5("The is the final project for Lucy Eckert in ST558. I built an application to look at how measurements of well-being affect happiness. Do countries with the greatest wealth have the most happiness? Do the healthiest countries have the most happiness? With this app you can review how different factors will predict happiness.")),
                               box(background = "light-blue", width=12, h5("My data comes from the World Happiness Report, which is a publication of the Sustainable Development Solutions Network. The report was first published in 2012, and I looked at the 2016 dataset.")), 
-                              box(background = "navy", width=12, h5("Documentation"), uiOutput("tab"), uiOutput("datatab"))),
+                              box(background = "navy", width=12, h5("Documentation"), uiOutput("tab"), uiOutput("datatab")),
+                              box(background = "blue", width=12,h5("A note about the corruption variable - this should be understood as the absence of corruption. Therefore a positive score for this variable is better than a lower score. It can be though of as trust of the government and of other citizens."))),
                       
                       
                       tabItem(tabName = "Data", strong(h2("Data Tables")),
@@ -70,9 +71,16 @@ dashboardPage(skin = "purple",
                               br(),
                               plotOutput("plot1"),
                               
-                              sliderInput("Health", "Predict Happiness Value by Health Rating", min=0, max=1, value=0.3), 
+                              sliderInput("Healthz", "Predict Happiness Value by Health Rating", min=0, max=1, value=0.3),
+                              sliderInput("Economyz", "Predict Happiness Value by Economy Rating", min=0, max=1, value=0.3),
+                              sliderInput("Familyz", "Predict Happiness Value by Family Rating", min=0, max=1, value=0.3),
+                              sliderInput("Freedomz", "Predict Happiness Value by Freedom Rating", min=0, max=1, value=0.3),
+                              sliderInput("Corruptionz", "Predict Happiness Value by Corruption Rating", min=0, max=1, value=0.3),
+                              sliderInput("Generosityz", "Predict Happiness Value by Generosity Rating", min=0, max=1, value=0.3),
+                          
                               
-                              tableOutput("mtable"),
+                              h5("Here is the predicted happiness value, given the user input. For your background information, the country with the highest happiness value was Denmark, with a score of 7.53, and the country with the lowest happiness value was Burundi, with a score of 2.91"),
+                              tableOutput("mtablez"),
                               
                               radioButtons("mlrpreds", "Choose the Multiple Linear Regression Variables", 
                                            choices=c("Effect of Freedom and Family on Happiness", 

@@ -8,6 +8,7 @@ library(DT)
 library(ggplot2)
 library(caret)
 library(ggfortify)
+library(shinyTree)
 
 #Load in data 
 
@@ -224,12 +225,16 @@ shinyServer(function(input, output, session){
     
   })
   
-  #Predict happiness value based on health score selected from a sliderinput. 
-  output$mtable <- renderTable({
-    modeldata <- data.frame(Health = happydata$Health, Score = happydata$Score)
-    model_lm <- lm(Score ~ Health, data=modeldata)
-    ddata <- data.frame(Health=input$Health)
-    preddata <- predict(model_lm, ddata)
+  #Predict happiness value based on input selected from sliderinputs. 
+  
+  output$mtablez <- renderTable({
+    modeldataz <- data.frame(Health = happydata$Health, Score = happydata$Score, Economy = happydata$Economy,
+                            Family = happydata$Family, Freedom = happydata$Freedom, Corruption = happydata$Corruption,
+                            Generosity = happydata$Generosity)
+    model_lmz <- lm(Score ~ Health + Economy + Family + Freedom + Corruption + Generosity , data=modeldataz)
+    ddataz <- data.frame(Health=input$Healthz, Economy=input$Economyz, Family=input$Familyz, Freedom=input$Freedomz,
+                         Corruption=input$Corruptionz, Generosity = input$Generosityz)
+    preddata <- predict(model_lmz, ddataz)
     
   })
   
@@ -246,19 +251,18 @@ shinyServer(function(input, output, session){
   #Second supervised learning model - MLR
   output$mlrmodel<- renderTable({
     if(input$mlrpreds=="Effect of Freedom and Family on Happiness"){
-      paste("R-squared: ", sum_mod4$r.squared, "As this is a multiple linear reg. model, we interpret the R-squared value as how the freedom and family predictors are related.",
-            "As the R-squared is high, we can conclude that freedom and family are highly related in measuring the happiness value.")
+      paste("R-squared: ", sum_mod4$r.squared, "As this is a multiple linear reg. model, we interpret the R-squared value as how the freedom and family predictors are related.")
     }
     else if(input$mlrpreds=="Effect of Generosity and Economy on Happiness"){
-      paste("R-squared: ", sum_mod5$r.squared, "As this is a multiple linear reg. model, we interpret the R-squared value as how the generosity and economy predictors are related.",
-            "As the R-squared is low, we can conclude that the generosity and economy aren't very related in measuring the happiness value.")
+      paste("R-squared: ", sum_mod5$r.squared, "As this is a multiple linear reg. model, we interpret the R-squared value as how the generosity and economy predictors are related.")
     }
     else if(input$mlrpreds=="Effect of Health and Family on Happiness"){
-      paste("R-squared: ", sum_mod6$r.squared, "As this is a multiple linear reg. model, we interpret the R-squared value as how the health and family predictors are related.",
-            "As the R-squared is high, we can conclude that the health and family are highly related in measuring the happiness value.")
+      paste("R-squared: ", sum_mod6$r.squared, "As this is a multiple linear reg. model, we interpret the R-squared value as how the health and family predictors are related.")
       
     }
   })
+  
+
   
 })
 
